@@ -1,9 +1,30 @@
 #!/usr/bin/python3
 
 import argparse
+import mysql.connector
+from mysql.connector import Error
 
 parser = argparse.ArgumentParser()
 parser.add_argument('file', type=argparse.FileType('r'))
 args = parser.parse_args()
 
 print(args.file.readlines())
+
+def connect():
+    """ Connect to MySQL database """
+    try:
+        conn = mysql.connector.connect(host='localhost',
+                                       database='python_mysql',
+                                       user='root',
+                                       password='Stalker345229')
+        if conn.is_connected():
+            print('Connected to MySQL database')
+    
+    except Error as e:
+        print(e)
+
+    finally:
+        conn.close()
+
+if __name__ == '__main__':
+    connect()
