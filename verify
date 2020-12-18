@@ -1,21 +1,19 @@
 #!/usr/bin/python3
 
-import sys
-import json
 import argparse
-from pprint import pprint
+import pymysql.cursors
 
-def createParser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument ('name', type=open)
+#Подключени к базе данных
+connection = pymysql.connect(host='localhost',
+                             user='root',
+                             password='qaz123',                             
+                             db='test',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
 
-    return parser
+#Парсим json из файла
+parser = argparse.ArgumentParser()
+parser.add_argument('file', type=argparse.FileType('r'))
+args = parser.parse_args()
 
-
-if __name__ == '__main__':
-    parser = createParser()
-    namespace = parser.parse_args()
-
-    with open('purchase.json', 'r', encoding='utf-8') as f:
-        text = json.load(f)
-        pprint(text)
+print(args.file.readlines())
