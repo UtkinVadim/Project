@@ -1,24 +1,32 @@
 #!/usr/bin/python3
 
-import mysql.connector
-from mysql.connector import Error
+import pymysql.cursors
 
-def connect():
-    """ Connect to MySQL databse """
-    try:
-        conn = mysql.connector.connect(host='localhost',
-                                       database='test',
-                                       user='root',
-                                       password='qaz123')
-        if conn.is_connected():
-            print('Connected to MySQL database')
+connection = pymysql.connect(host='localhost',
+                             user='root',
+                             password='qaz123',                             
+                             db='test',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
 
-    except Error as e:
-        print(e)
+print("Connect Succesfull!")
 
-    finally:
-        conn.close()
+try:
+    with connection.cursor() as cursor:
 
-if __name__ == '__main__':
-    connect()
+        #SQL
+        sql = "SELECT * FROM test_table"
 
+        #Выполнить команду запроса
+        cursor.execute(sql)
+
+        print("cursor.description: ", cursor.description)
+
+        print()
+
+        for row in cursor:
+            print(row)
+
+finally:
+    #Закрыть соединение
+    connection.close()
