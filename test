@@ -1,25 +1,18 @@
 #!/usr/bin/python3
 
-import argparse
 import mysql.connector
 from mysql.connector import Error
 
-parser = argparse.ArgumentParser()
-parser.add_argument('file', type=argparse.FileType('r'))
-args = parser.parse_args()
-
-print(args.file.readlines())
-
 def connect():
-    """ Connect to MySQL database """
+    """ Connect to MySQL databse """
     try:
         conn = mysql.connector.connect(host='localhost',
-                                       database='python_mysql',
+                                       database='test',
                                        user='root',
-                                       password='Stalker345229')
+                                       password='qaz123')
         if conn.is_connected():
             print('Connected to MySQL database')
-    
+
     except Error as e:
         print(e)
 
@@ -28,3 +21,4 @@ def connect():
 
 if __name__ == '__main__':
     connect()
+
