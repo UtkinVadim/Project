@@ -2,8 +2,17 @@
 
 import argparse
 import pymysql.cursors
+import json
 
-#Подключени к базе данных
+parser = argparse.ArgumentParser()
+parser.add_argument('file', type=argparse.FileType('r'))
+args = parser.parse_args()
+
+with args.file as file:
+    json_pars = args.file.read()
+    json_file = json.loads(json_pars)
+    json_tran_id = json_file["receiptData"]["TransactionID"]
+
 connection = pymysql.connect(host='localhost',
                              user='root',
                              password='qaz123',                             
@@ -11,9 +20,24 @@ connection = pymysql.connect(host='localhost',
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
 
-#Парсим json из файла
-parser = argparse.ArgumentParser()
-parser.add_argument('file', type=argparse.FileType('r'))
-args = parser.parse_args()
+def add(json_file):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO test_table (transaction_id) VALUES (%s)", json_file)
+            connection.commit()
+    finally:
+        connection.close()
 
-print(args.file.readlines())
+def check_transaction():
+
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT transaction_id FROM test_table WHERE transaction_id = %s', json_tran_id)
+        row = cursor.fetchall()
+
+    if json_tran_id in str(row):
+        print('This transaction already exists')
+        quit()
+    else:
+        add(json_tran_id)
+
+check_transaction()
