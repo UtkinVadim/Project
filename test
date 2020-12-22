@@ -1,7 +1,23 @@
 #!/usr/bin/python3
 
+import argparse
 import pymysql.cursors
+import json
 
+#Парсим json из файла
+parser = argparse.ArgumentParser()
+parser.add_argument('file', type=argparse.FileType('r'))
+args = parser.parse_args()
+
+with args.file as file:
+    json_pars = args.file.read()
+    json_file = json.loads(json_pars)
+    json_tran_id = json_file["receiptData"]["TransactionID"]
+
+#Выводим на экран данные json файла
+#print(json_file["receiptData"]["TransactionID"])
+
+#Подключени к базе данных
 connection = pymysql.connect(host='localhost',
                              user='root',
                              password='qaz123',                             
@@ -9,24 +25,31 @@ connection = pymysql.connect(host='localhost',
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
 
-print("Connect Succesfull!")
+#Функция для добавления данных из ДЖСОН в БД
+def add(json_file):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO test_table (transaction_id) VALUES (%s)", json_file)
+            connection.commit()
+    finally:
+        connection.close()
+#Использование функции
+#add(json_file["receiptData"]["TransactionID"])
 
-try:
+#Проверяем, есть ли транзакция с переданным ID в базе.
+#Если есть - программа возвращает сообщение и заканчивает работу.
+#Если нет - данные из json сохраняются в базу данных.
+
+def check_transaction():
+
     with connection.cursor() as cursor:
+        cursor.execute('SELECT transaction_id FROM test_table WHERE transaction_id = %s', json_tran_id)
+        row = cursor.fetchall()
 
-        #SQL
-        sql = "SELECT * FROM test_table"
+    if json_tran_id in str(row):
+        print('This transaction already exists')
+        quit()
+    else:
+        add(json_tran_id)
 
-        #Выполнить команду запроса
-        cursor.execute(sql)
-
-        print("cursor.description: ", cursor.description)
-
-        print()
-
-        for row in cursor:
-            print(row)
-
-finally:
-    #Закрыть соединение
-    connection.close()
+check_transaction()
