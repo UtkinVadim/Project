@@ -3,7 +3,9 @@
 import argparse
 import pymysql.cursors
 import json
+import requests
 
+#Парсинг переданного аргумента
 parser = argparse.ArgumentParser()
 parser.add_argument('file', type=argparse.FileType('r'))
 args = parser.parse_args()
@@ -12,7 +14,9 @@ with args.file as file:
     json_pars = args.file.read()
     json_file = json.loads(json_pars)
     json_tran_id = json_file["receiptData"]["TransactionID"]
+    json_payload = json_file["receiptData"]["Payload"]
 
+#Подключение к БД
 connection = pymysql.connect(host='localhost',
                              user='root',
                              password='qaz123',                             
@@ -20,24 +24,55 @@ connection = pymysql.connect(host='localhost',
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
 
+#Верификация receipt payload с помощью Apple REST API
+url = 'https://buy.itunes.apple.com/verifyReceipt'
+r = requests.post(url, json={'receipt-data': json_payload})
+
+if '"status":0' in r.text:
+    result = 1
+else:
+    result = 0
+
+#Функция для добавления transaction_id в БД
 def add(json_file):
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute("INSERT INTO test_table (transaction_id) VALUES (%s)", json_file)
-            connection.commit()
-    finally:
-        connection.close()
-
-def check_transaction():
-
     with connection.cursor() as cursor:
-        cursor.execute('SELECT transaction_id FROM test_table WHERE transaction_id = %s', json_tran_id)
+        cursor.execute("INSERT INTO test_table (transaction_id) VALUES (%s)", json_file)
+        connection.commit()
+
+#Добавление transaction_id в БД при его отсутствии
+def check_transaction():
+    with connection.cursor() as cursor:
+        cursor.execute('SELECT transaction_id FROM test_table WHERE transaction_id = (%s)', json_tran_id)
         row = cursor.fetchall()
 
     if json_tran_id in str(row):
-        print('This transaction already exists')
+        print('This transaction already exists.')
         quit()
     else:
         add(json_tran_id)
+        print("Transaction ID has been added in MySQL.")
 
 check_transaction()
+
+#Добавление данных в is_valid на основе полученных данных от верификации
+def add_is_valid():
+    if result == 1:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT INTO test_table (is_valid) VALUES ('is_valid=1')")
+                connection.commit()
+        finally:
+            connection.close()
+        print('Receipt is valid')
+        quit()
+    else:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT INTO test_table (is_valid) VALUES ('is_valid=0')")
+                connection.commit()
+        finally:
+            connection.close()
+        print('Error: ' + r.text)
+        quit()
+
+add_is_valid()

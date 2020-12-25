@@ -25,16 +25,16 @@ connection = pymysql.connect(host='localhost',
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
 
-#Функция для добавления данных из ДЖСОН в БД
-def add(json_file):
+#Функция для добавления данных из ДЖСОН в transaction_id
+def add_transaction_id(json_tran_id):
     try:
         with connection.cursor() as cursor:
-            cursor.execute("INSERT INTO test_table (transaction_id) VALUES (%s)", json_file)
+            cursor.execute("INSERT INTO test_table (transaction_id) VALUES (%s)", json_tran_id)
             connection.commit()
     finally:
         connection.close()
 #Использование функции
-#add(json_file["receiptData"]["TransactionID"])
+#add_transaction_id(json_file["receiptData"]["TransactionID"])
 
 #Проверяем, есть ли транзакция с переданным ID в базе.
 #Если есть - программа возвращает сообщение и заканчивает работу.
@@ -50,6 +50,7 @@ def check_transaction():
         print('This transaction already exists')
         quit()
     else:
-        add(json_tran_id)
+        add_transaction_id(json_tran_id)
 
 check_transaction()
+
