@@ -29,7 +29,7 @@ connection = pymysql.connect(host='localhost',
 url = 'https://buy.itunes.apple.com/verifyReceipt'
 r = requests.post(url, json={'receipt-data': json_payload})
 
-if r.response['status'] == '0':
+if '"status":0' in r.text:
     result = 1
 else:
     result = 0
